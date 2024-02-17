@@ -141,6 +141,7 @@ fun BuildScreen(
                                 override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
                                     Log.d(_tag, "onSurfaceTextureDESTROYED")
                                     cameraClient.closeCamera()
+                                    usbCameraViewModel.stopVideoStreaming()
                                     return true
                                 }
 

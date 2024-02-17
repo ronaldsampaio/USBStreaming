@@ -30,6 +30,8 @@ class USBCameraViewModel(private val streamingController: StreamingController) :
 
     fun stopVideoStreaming(){
         streamingController.stopStream()
+        streamingController.stopPreview()
+        streamingController.release()
     }
 
     fun changeVideoSource(usbCameraSource: USBCameraSource){

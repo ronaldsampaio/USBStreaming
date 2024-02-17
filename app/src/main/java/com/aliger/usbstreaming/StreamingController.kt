@@ -8,6 +8,7 @@ import com.jiangdg.ausbc.CameraClient
 import com.pedro.common.ConnectChecker
 import com.pedro.encoder.utils.gl.AspectRatioMode
 import com.pedro.library.util.sources.audio.MicrophoneSource
+import com.pedro.library.view.OrientationForced
 import com.pedro.rtspserver.ClientListener
 import com.pedro.rtspserver.RtspServerStream
 import com.pedro.rtspserver.ServerClient
@@ -25,13 +26,14 @@ class StreamingController(private val context: Context) : ClientListener, Connec
         rtspServerStream = RtspServerStream(context,portNum,this,USBCameraSource(context,cameraClient),
             MicrophoneSource()
         )
-        rtspServerStream.getGlInterface().setAspectRatioMode(AspectRatioMode.Fill)
-
+        rtspServerStream.getGlInterface().setAspectRatioMode(AspectRatioMode.Adjust)
+        rtspServerStream.getGlInterface().forceOrientation(OrientationForced.LANDSCAPE)
+        prepared = rtspServerStream.prepareVideo(1280, 720, 4000000) && rtspServerStream.prepareAudio(48000,false,128000)
     }
 
 
     fun startStream(){
-        if(rtspServerStream.prepareVideo(1280, 720, 4000000, rotation = 90) && rtspServerStream.prepareAudio(48000,false,128000)){
+        if (prepared && !rtspServerStream.isStreaming) {
             rtspServerStream.startStream()
         }
         else{
@@ -116,15 +118,23 @@ class StreamingController(private val context: Context) : ClientListener, Connec
 
 
     fun startPreview(textureView: TextureView){
-        rtspServerStream.startPreview(textureView)
+        if (prepared && !rtspServerStream.isOnPreview) rtspServerStream.startPreview(textureView)
     }
 
     fun startPreview(surfaceView: SurfaceView) {
-        rtspServerStream.startPreview(surfaceView)
+        if (prepared && !rtspServerStream.isOnPreview) rtspServerStream.startPreview(surfaceView)
     }
 
     fun stopStream(){
-        //rtspServerCamera1.stopStream()
+        if (rtspServerStream.isStreaming) rtspServerStream.stopStream()
+    }
+
+    fun stopPreview() {
+        if (rtspServerStream.isOnPreview) rtspServerStream.stopPreview()
+    }
+
+    fun release() {
+        rtspServerStream.release()
     }
 
     //FROM ClientListener()
