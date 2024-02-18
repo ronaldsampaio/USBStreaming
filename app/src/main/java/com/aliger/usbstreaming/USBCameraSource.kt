@@ -28,6 +28,7 @@ class USBCameraSource(
         return try {
             Log.d("camera_str", "defining Render size to $width Width and $height height")
             cameraClient.setRenderSize(width,height)
+            created = true
             true
         } catch (e : Exception){
             Log.d("camera_str","EXCEPTION ON CREATE USBCAMERASOURCE -> $e")

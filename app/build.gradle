@@ -98,8 +98,7 @@ dependencies {
 
 
     //RTSP Streaming
-    def streaming_lib_version = "2.3.4"
-    implementation 'com.github.pedroSG94:RTSP-Server:1.2.1'
-    implementation "com.github.pedroSG94.RootEncoder:library:$streaming_lib_version"
+    implementation 'com.github.pedroSG94:RTSP-Server:7469cdcb78'
+    implementation 'com.github.pedroSG94.RootEncoder:library:1627f7f62b'
 
 }
