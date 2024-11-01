@@ -35,12 +35,6 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
-import com.jiangdg.ausbc.CameraClient
-import com.jiangdg.ausbc.callback.ICaptureCallBack
-import com.jiangdg.ausbc.callback.IPreviewDataCallBack
-import com.jiangdg.ausbc.camera.CameraUvcStrategy
-import com.jiangdg.ausbc.camera.bean.CameraRequest
-import com.jiangdg.ausbc.utils.ToastUtils
 import org.koin.androidx.compose.koinViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -63,51 +57,17 @@ fun USBCameraScreen() {
         )
     val multiplePermissionsState = rememberMultiplePermissionsState(permissions)
     if(multiplePermissionsState.allPermissionsGranted){
-        BuildScreen(rememberCameraClient(context = LocalContext.current))
+        BuildScreen()
     }else{
         NoPermissionScreen(multiplePermissionsState::launchMultiplePermissionRequest)
     }
 }
 
-@Composable
-fun rememberCameraClient(context: Context): CameraClient = remember {
-    CameraClient.newBuilder(context).apply {
-        setEnableGLES(true)
-        setCameraStrategy(CameraUvcStrategy(context))
-        setRawImage(false)
-        setCameraRequest(
-            CameraRequest.Builder()
-                .setFrontCamera(false)
-                .setPreviewWidth(1280)
-                .setPreviewHeight(720)
-                .create()
-        )
-        openDebug(true)
-
-    }.build()
-}
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun BuildScreen(
-    cameraClient : CameraClient,
     usbCameraViewModel: USBCameraViewModel = koinViewModel()
 ) {
-    cameraClient.addPreviewDataCallBack(object : IPreviewDataCallBack {
-        init {
-            Log.d("camera_streaming","INSIDE PREVIEW CONSTUCTOR!")
-        }
-        override fun onPreviewData(
-            data: ByteArray?,
-            width: Int,
-            height: Int,
-            format: IPreviewDataCallBack.DataFormat
-        ) {
-            //Log.d("camera_streaming","PREVIEW DATA CALLBACK")
-        }
-
-    })
-
     Scaffold(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -118,15 +78,15 @@ fun BuildScreen(
             Box(Modifier.height(500.dp)) {
                 AndroidView(
                     factory = { context1 ->
-                        TextureView(context1).apply {
-                            this.surfaceTextureListener = (object : TextureView.SurfaceTextureListener{
+                        TextureView(context1).also {
+                            it.surfaceTextureListener = (object : TextureView.SurfaceTextureListener{
                                 val _tag = "camera_streaming"
                                 override fun onSurfaceTextureAvailable(
                                     surface: SurfaceTexture,
                                     width: Int,
                                     height: Int
                                 ) {
-                                    usbCameraViewModel.startVideoStreaming(cameraClient, this@apply)
+                                    usbCameraViewModel.startVideoStreaming(it)
                                 }
 
                                 override fun onSurfaceTextureSizeChanged(
@@ -135,12 +95,10 @@ fun BuildScreen(
                                     height: Int
                                 ) {
                                     Log.d(_tag, "onSurfaceTextureSIZECHANGED")
-                                    cameraClient.setRenderSize(1280, 720)
                                 }
 
                                 override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
                                     Log.d(_tag, "onSurfaceTextureDESTROYED")
-                                    cameraClient.closeCamera()
                                     usbCameraViewModel.stopVideoStreaming()
                                     return true
                                 }
@@ -158,7 +116,6 @@ fun BuildScreen(
             Spacer(modifier = Modifier.height(20.dp))
             Button(
                 onClick = {
-                    captureImage(cameraClient, currentContext)
                 },
                 shape = CircleShape,
                 modifier = Modifier
@@ -181,26 +138,4 @@ fun BuildScreen(
 
     }
 
-}
-
-fun captureImage(cameraClient: CameraClient, context: Context){
-
-    cameraClient.captureImage(object : ICaptureCallBack {
-        override fun onBegin() {
-            Toast.makeText(context, "onBegin", Toast.LENGTH_SHORT).show()
-            Log.i("CameraClient", "onBegin")
-
-        }
-
-        override fun onError(error: String?) {
-            Toast.makeText(context, "onError", Toast.LENGTH_SHORT).show()
-            Log.i("CameraClient", "onError")
-        }
-
-        override fun onComplete(path: String?) {
-            Toast.makeText(context, "onComplete", Toast.LENGTH_SHORT).show()
-            ToastUtils.show("OnComplete")
-            Log.i("CameraClient", "onComplete")
-        }
-    })
 }

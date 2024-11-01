@@ -4,14 +4,15 @@ import android.content.Context
 import android.util.Log
 import android.view.SurfaceView
 import android.view.TextureView
-import com.jiangdg.ausbc.CameraClient
 import com.pedro.common.ConnectChecker
+import com.pedro.encoder.input.sources.OrientationForced
+import com.pedro.encoder.input.sources.audio.MicrophoneSource
+import com.pedro.encoder.input.sources.video.VideoSource
 import com.pedro.encoder.utils.gl.AspectRatioMode
-import com.pedro.library.util.sources.audio.MicrophoneSource
-import com.pedro.library.view.OrientationForced
-import com.pedro.rtspserver.ClientListener
+import com.pedro.extrasources.CameraUvcSource
 import com.pedro.rtspserver.RtspServerStream
-import com.pedro.rtspserver.ServerClient
+import com.pedro.rtspserver.server.ClientListener
+import com.pedro.rtspserver.server.ServerClient
 import org.koin.core.annotation.Factory
 import java.nio.ByteBuffer
 
@@ -22,13 +23,19 @@ class StreamingController(private val context: Context) : ClientListener, Connec
     private var prepared = false
 
 
-    fun setUpServer(cameraClient: CameraClient) {
-        rtspServerStream = RtspServerStream(context,portNum,this,USBCameraSource(context,cameraClient),
+    fun setUpServer() {
+        rtspServerStream = RtspServerStream(
+            context, portNum, this,
+            CameraUvcSource(),
             MicrophoneSource()
         )
         rtspServerStream.getGlInterface().setAspectRatioMode(AspectRatioMode.Adjust)
         rtspServerStream.getGlInterface().forceOrientation(OrientationForced.LANDSCAPE)
-        prepared = rtspServerStream.prepareVideo(1280, 720, 4000000) && rtspServerStream.prepareAudio(48000,false,128000)
+        prepared = rtspServerStream.prepareVideo(
+            1280,
+            720,
+            4000000
+        ) && rtspServerStream.prepareAudio(48000, false, 128000)
     }
 
 
@@ -45,9 +52,9 @@ class StreamingController(private val context: Context) : ClientListener, Connec
 
     }
 
-    fun changeVideoSource(usbCameraSource: USBCameraSource) {
+    fun changeVideoSource(newVideoSource: VideoSource) {
         //rtspStream.changeVideoSource(usbCameraSource)
-        rtspServerStream.changeVideoSource(usbCameraSource)
+        rtspServerStream.changeVideoSource(newVideoSource)
     }
 
 //    fun onVideoFrame(frame: ByteArray, size: Int, isIdr: Boolean, timestamp: Long) {
@@ -139,12 +146,16 @@ class StreamingController(private val context: Context) : ClientListener, Connec
 
     //FROM ClientListener()
     override fun onClientConnected(client: ServerClient) {
-        Log.d("Streaming","Client Connected: ${client.name}")
+        Log.d("Streaming","Client Connected: ${client.getAddress()}")
 
     }
 
     override fun onClientDisconnected(client: ServerClient) {
-        Log.d("Streaming","Client Disconnected: ${client.name}")
+        Log.d("Streaming","Client Disconnected: ${client.getAddress()}")
+    }
+
+    override fun onClientNewBitrate(bitrate: Long, client: ServerClient) {
+        TODO("Not yet implemented")
     }
 
     //FROM ConnectChecker()
@@ -174,8 +185,5 @@ class StreamingController(private val context: Context) : ClientListener, Connec
 
     override fun onNewBitrate(bitrate: Long) {
     }
-
-
-
 
 }

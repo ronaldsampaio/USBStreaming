@@ -3,23 +3,22 @@ package com.aliger.usbstreaming
 import android.view.SurfaceView
 import android.view.TextureView
 import androidx.lifecycle.ViewModel
-import com.jiangdg.ausbc.CameraClient
+import com.pedro.encoder.input.sources.video.VideoSource
 import org.koin.android.annotation.KoinViewModel
 
 @KoinViewModel
 class USBCameraViewModel(private val streamingController: StreamingController) : ViewModel(){
 
     fun startVideoStreaming(
-        cameraClient: CameraClient,
         textureView: TextureView
     ) {
-        streamingController.setUpServer(cameraClient)
+        streamingController.setUpServer()
         streamingController.startStream()
         startPreview(textureView)
     }
 
-    fun startVideoStreaming(cameraClient: CameraClient, surfaceView: SurfaceView) {
-        streamingController.setUpServer(cameraClient)
+    fun startVideoStreaming(surfaceView: SurfaceView) {
+        streamingController.setUpServer()
         streamingController.startStream()
         startPreview(surfaceView)
     }
@@ -34,8 +33,8 @@ class USBCameraViewModel(private val streamingController: StreamingController) :
         streamingController.release()
     }
 
-    fun changeVideoSource(usbCameraSource: USBCameraSource){
-        streamingController.changeVideoSource(usbCameraSource)
+    fun changeVideoSource(newSource: VideoSource){
+        streamingController.changeVideoSource(newSource)
     }
 
     fun startPreview(textureView: TextureView){
